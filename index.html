@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Công cụ tạo số ngẫu nhiên</title>
+    <meta name="description"
+        content="Tạo số ngẫu nhiên trực tuyến miễn phí. Tùy chỉnh khoảng số và số lượng kết quả nhanh chóng.">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: Roboto, sans-serif;
+        }
+
+        body {
+            background: #f7f8fa;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 14px;
+        }
+
+        .field {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid #dfe3e8;
+            border-radius: 9px;
+            outline: none;
+        }
+
+        .field:focus {
+            border-color: #eab308;
+            box-shadow: 0 0 0 3px #fef3c7;
+        }
+
+        .btn {
+            background: #facc15;
+            color: #222;
+            padding: 12px 20px;
+            border-radius: 9px;
+            font-weight: 600;
+            transition: .2s;
+        }
+
+        .btn:hover {
+            background: #eab308;
+        }
+
+        .result-item {
+            background: #fffbeb;
+            border: 1px solid #fde68a;
+            padding: 12px;
+            border-radius: 9px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: 700;
+        }
+    </style>
+</head>
+
+<body class="text-gray-800">
+    <main class="max-w-2xl mx-auto px-4 py-10">
+        <div class="text-center mb-7">
+            <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-semibold mb-3">
+                CÔNG CỤ MIỄN PHÍ
+            </span>
+            <h1 class="text-2xl md:text-3xl font-bold mb-2">Tạo số ngẫu nhiên</h1>
+            <p class="text-gray-500 text-sm">
+                Tạo nhanh các con số ngẫu nhiên theo khoảng giá trị bạn chọn.
+            </p>
+        </div>
+
+        <section class="card p-5 md:p-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label for="minNumber" class="block text-sm font-semibold mb-2">Số nhỏ nhất</label>
+                    <input id="minNumber" type="number" class="field" value="1">
+                </div>
+
+                <div>
+                    <label for="maxNumber" class="block text-sm font-semibold mb-2">Số lớn nhất</label>
+                    <input id="maxNumber" type="number" class="field" value="100">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <label for="quantity" class="block text-sm font-semibold mb-2">Số lượng cần tạo</label>
+                    <input id="quantity" type="number" min="1" max="100" class="field" value="5">
+                    <p class="text-xs text-gray-400 mt-1">Có thể tạo từ 1 đến 100 số.</p>
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                    <input id="unique" type="checkbox" checked class="accent-yellow-500 w-4 h-4">
+                    Không lặp lại số
+                </label>
+            </div>
+
+            <button onclick="generateNumbers()" class="btn w-full mt-5">
+                Tạo số ngẫu nhiên
+            </button>
+
+            <p id="error" class="hidden text-red-600 text-sm mt-3"></p>
+        </section>
+
+        <section class="card p-5 md:p-6 mt-5">
+            <div class="flex items-center justify-between gap-2 mb-4">
+                <h2 class="font-bold text-lg">Kết quả</h2>
+                <span id="resultCount" class="text-xs text-gray-400">0 số</span>
+            </div>
+
+            <div id="results" class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <p class="col-span-full text-center text-gray-400 py-8 text-sm">
+                    Nhấn nút tạo số để xem kết quả.
+                </p>
+            </div>
+
+            <div class="flex flex-wrap gap-2 mt-5">
+                <button onclick="copyResults()"
+                    class="flex-1 secondary-btn border border-gray-200 rounded-lg py-2.5 text-sm font-medium hover:bg-gray-50">
+                    Sao chép kết quả
+                </button>
+                <button onclick="downloadResults()"
+                    class="flex-1 secondary-btn border border-gray-200 rounded-lg py-2.5 text-sm font-medium hover:bg-gray-50">
+                    Tải xuống TXT
+                </button>
+            </div>
+        </section>
+
+        <p class="text-center text-xs text-gray-400 mt-6">
+            Random Number Generator – Công cụ tạo số ngẫu nhiên online
+        </p>
+    </main>
+
+    <script>
+        let generatedNumbers = [];
+
+        function generateNumbers() {
+            const min = Number(document.getElementById('minNumber').value);
+            const max = Number(document.getElementById('maxNumber').value);
+            const quantity = Number(document.getElementById('quantity').value);
+            const unique = document.getElementById('unique').checked;
+            const error = document.getElementById('error');
+            const results = document.getElementById('results');
+
+            error.classList.add('hidden');
+
+            if (
+                document.getElementById('minNumber').value.trim() === '' ||
+                document.getElementById('maxNumber').value.trim() === '' ||
+                document.getElementById('quantity').value.trim() === ''
+            ) {
+                showError('Vui lòng nhập đầy đủ thông tin.');
+                return;
+            }
+
+            if (!Number.isSafeInteger(min) || !Number.isSafeInteger(max)) {
+                showError('Vui lòng nhập số nguyên hợp lệ.');
+                return;
+            }
+
+            if (min > max) {
+                showError('Số nhỏ nhất không được lớn hơn số lớn nhất.');
+                return;
+            }
+
+            if (!Number.isInteger(quantity) || quantity < 1 || quantity > 100) {
+                showError('Số lượng phải từ 1 đến 100.');
+                return;
+            }
+
+            const range = max - min + 1;
+
+            if (unique && quantity > range) {
+                showError('Khoảng số không đủ để tạo số lượng không trùng lặp.');
+                return;
+            }
+
+            generatedNumbers = [];
+
+            if (unique) {
+                const pool = [];
+                for (let i = min; i <= max; i++) {
+                    pool.push(i);
+                }
+
+                for (let i = pool.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [pool[i], pool[j]] = [pool[j], pool[i]];
+                }
+
+                generatedNumbers = pool.slice(0, quantity);
+            } else {
+                for (let i = 0; i < quantity; i++) {
+                    generatedNumbers.push(
+                        Math.floor(Math.random() * range) + min
+                    );
+                }
+            }
+
+            results.innerHTML = generatedNumbers.map(number =>
+                `<div class="result-item">${number}</div>`
+            ).join('');
+
+            document.getElementById('resultCount').textContent =
+                generatedNumbers.length + ' số';
+        }
+
+        function showError(message) {
+            const error = document.getElementById('error');
+            error.textContent = message;
+            error.classList.remove('hidden');
+        }
+
+        function copyResults() {
+            if (generatedNumbers.length === 0) {
+                alert('Bạn chưa tạo số nào!');
+                return;
+            }
+
+            gbCopy(generatedNumbers.join(', '));
+        }
+
+        function downloadResults() {
+            if (generatedNumbers.length === 0) {
+                alert('Bạn chưa tạo số nào!');
+                return;
+            }
+
+            gbDownload(
+                'ket-qua-so-ngau-nhien.txt',
+                generatedNumbers.join('\n')
+            );
+        }
+
+        function gbCopy(text) {
+            const area = document.createElement('textarea');
+            area.value = text;
+            area.style.position = 'fixed';
+            area.style.opacity = '0';
+            document.body.appendChild(area);
+            area.select();
+
+            try {
+                document.execCommand('copy');
+                alert('Đã sao chép kết quả!');
+            } catch {
+                alert('Không thể sao chép kết quả.');
+            }
+
+            area.remove();
+        }
+
+        function gbDownload(filename, content) {
+            const blob = new Blob([content], {
+                type: 'text/plain;charset=utf-8'
+            });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+
+            link.href = url;
+            link.download = filename;
+            link.click();
+
+            URL.revokeObjectURL(url);
+        }
+
+        generateNumbers();
+    </script>
+</body>
+
+</html>
